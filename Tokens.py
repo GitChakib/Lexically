@@ -35,9 +35,12 @@ class Token:
 
 #every token is a tuple of a name and a list of characters and whether they can be repeated
 
+space = " \t" 
+
 IF = Token("IF", [("i", False), ("f", False)]) 
 ID = Token("ID", [(letters, False), (letters + numbers, True)])
 ELSE = Token("ELSE", [("e", False), ("l", False), ("s", False), ("e", False)])
+SKIP = Token("SKIP", )
 
 #functtion to read string and match it with the token
        
