@@ -3,12 +3,14 @@
 #NEEDED FOR MATCHING (instead of writing "L/N" just write letters + (same as or) numbers)
 letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 numbers = "0123456789"
+space = " \t"
+epsilon = None       #ε transitions are counted as None since the character ε adds a character when epsilon in reality is empty
 
 
 
 class Token:
 
-    def __init__(self, name, string):
+    def __init__(self, name, string, skip = False):
         self.name = name
         self.string = string
 
@@ -40,7 +42,7 @@ space = " \t"
 IF = Token("IF", [("i", False), ("f", False)]) 
 ID = Token("ID", [(letters, False), (letters + numbers, True)])
 ELSE = Token("ELSE", [("e", False), ("l", False), ("s", False), ("e", False)])
-SKIP = Token("SKIP", )
+SKIP = Token("WS", [(space, False), (space, True)], skip=True)
 
 #functtion to read string and match it with the token
        
@@ -49,5 +51,3 @@ if __name__ == "__main__":
     for text in ["if", "chakib", "and", "abc123", "print", "else", "walid", "13"]:
 
         print(f"{text} {IF.match_token(text, 0) or ELSE.match_token(text, 0) or ID.match_token(text, 0)}")
-
-#CURRENT ERROR IS IN MATCH_TOKEN FUNCTION
