@@ -1,6 +1,6 @@
 #every state is an object that has a name and a list of possible transitions and if it can be repeated
 
-from Tokens import IF, ID, ELSE
+from Tokens import IF, ID, ELSE, SKIP
 from Tokens import letters, numbers, epsilon, space
 
 
@@ -129,4 +129,4 @@ def printAutomata(start):
 
 if __name__ == "__main__":
   
-        printAutomata(union([IF, ELSE, ID]))
+        printAutomata(union([IF, ID, SKIP, ELSE, ID]))
