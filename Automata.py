@@ -89,6 +89,79 @@ def union(tokens):
 
     return start
 
+def all_states(start):
+
+#returns every state reachable from start
+
+    seen = []
+    toVisit = [start]
+
+    while toVisit:
+
+        currentState = toVisit.pop(0)
+
+        if currentState in seen:
+            continue
+        seen.append(currentState)
+
+        for chars, nextState in currentState.transitions:
+            toVisit.append(nextState)
+
+    return seen
+
+
+def epsilon_closure(state):
+
+#every state reachable from this one using only epsilon arrows (including itself)
+
+    closure = [state]
+    toVisit = [state]
+
+    while toVisit:
+
+        currentState = toVisit.pop(0)
+
+        for chars, nextState in currentState.transitions:
+
+            if chars == epsilon and nextState not in closure:
+                closure.append(nextState)
+                toVisit.append(nextState)
+
+    return closure
+
+
+def remove_epsilon(start):
+
+    states = all_states(start)
+    new_data = {}
+
+    # step 1: work out the new arrows for every state, without changing anything yet
+    for state in states:
+
+        new_transitions = []
+        final = False
+        token_name = None
+
+        for s in epsilon_closure(state):
+
+            if s.is_final and not final:        # the first final state found wins (token priority)
+                final = True
+                token_name = s.token_name
+
+            for chars, nextState in s.transitions:
+
+                if chars != epsilon and (chars, nextState) not in new_transitions:
+                    new_transitions.append((chars, nextState))
+
+        new_data[state] = (new_transitions, final, token_name)
+
+    # step 2: apply them
+    for state in states:
+        state.transitions, state.is_final, state.token_name = new_data[state]
+
+    number_states(start)        # states that are no longer reachable disappear here
+    return start
+
 def printAutomata(start):
 
 #function for taking the start of the automata and traverses with each iteration printing the transitions of the next state
