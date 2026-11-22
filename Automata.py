@@ -182,7 +182,7 @@ def remove_epsilon(start):
 
 
 
-def subset_construction(start, tokens):
+def subset_diviser(start, tokens):
 
 #turns the automaton (no epsilon arrows) into a deterministic one.
 #every new state stands for a SET of old states.
@@ -199,6 +199,7 @@ def subset_construction(start, tokens):
         finals = [s for s in old_set if s.is_final]
 
         if finals:
+
             winner = min(finals, key = lambda s: priority[s.token_name]) 
 
             state.is_final = True
