@@ -146,7 +146,7 @@ def remove_epsilon(start):
 
             if s.is_final and not final:        # the first final state found wins (token priority)
                 final = True
-                token_name = s.token_name
+                token_name = s.tokenName
 
             for chars, nextState in s.transitions:
 
@@ -202,4 +202,4 @@ def printAutomata(start):
 
 if __name__ == "__main__":
   
-        printAutomata(union([IF, ID, SKIP, ELSE, ID]))
+        printAutomata(remove_epsilon(union([IF, ID, SKIP, ELSE, ID])))
