@@ -129,13 +129,101 @@ def epsilon_closure(state):
 
     return closure
 
+def split_groups(labels):
+
+
+    groups = {}       
+
+    for label in labels:
+
+        for char in label:
+
+            signature = tuple(i for i, other in enumerate(labels) if char in other)
+
+            if signature not in groups:
+                groups[signature] = ""
+
+            if char not in groups[signature]:
+                groups[signature] += char
+
+    return list(groups.values())
+
+def subset_construction(start, tokens):
+
+#turns the automaton (no epsilon arrows) into a deterministic one.
+#every new state stands for a SET of old states.
+#returns the new start state and a table (list of rows) describing every new state
+
+    priority = {token.name: i for i, token in enumerate(tokens)} 
+
+    def order(states):            
+
+        return sorted(states, key = lambda s: int(s.name[1:]))
+
+    def new_state(old_set):                                        
+
+        state = State(f"D{len(dfa_states)}", [])
+        finals = [s for s in old_set if s.is_final]
+
+        if finals:
+            winner = min(finals, key = lambda s: priority[s.token_name])    # best priority wins
+            state.is_final = True
+            state.token_name = winner.token_name
+
+        dfa_states[old_set] = state
+        toVisit.append(old_set)
+        return state
+
+    dfa_states = {}              # set of old states -> its new state
+    toVisit = []
+    table = []
+
+    dfa_start = new_state(frozenset([start]))
+    dfa_start.is_start = True
+
+    while toVisit:
+
+        old_set = toVisit.pop(0)
+        current = dfa_states[old_set]
+
+        labels = []
+        for s in order(old_set):
+            for chars, nextState in s.transitions:
+                labels.append(chars)
+
+        row = {"state": current.name,
+               "old states": "{" + ", ".join(s.name for s in order(old_set)) + "}",
+               "arrows": [],
+               "final": current.token_name}
+
+        for group in split_groups(labels):
+
+            targets = set()
+            for s in old_set:
+                for chars, nextState in s.transitions:
+                    if group[0] in chars:                  
+                        targets.add(nextState)
+
+            target_set = frozenset(targets)
+
+            if target_set not in dfa_states:
+                new_state(target_set)
+
+            current.add_transition(group, dfa_states[target_set])
+            row["arrows"].append((group, dfa_states[target_set].name))
+
+        table.append(row)
+
+    return dfa_start, table
+
+
 
 def remove_epsilon(start):
 
     states = all_states(start)
     new_data = {}
 
-    # step 1: work out the new arrows for every state, without changing anything yet
+    
     for state in states:
 
         new_transitions = []
@@ -144,7 +232,7 @@ def remove_epsilon(start):
 
         for s in epsilon_closure(state):
 
-            if s.is_final and not final:        # the first final state found wins (token priority)
+            if s.is_final and not final:      
                 final = True
                 token_name = s.tokenName
 
@@ -155,7 +243,6 @@ def remove_epsilon(start):
 
         new_data[state] = (new_transitions, final, token_name)
 
-    # step 2: apply them
     for state in states:
         state.transitions, state.is_final, state.token_name = new_data[state]
 
