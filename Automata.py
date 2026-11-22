@@ -148,75 +148,6 @@ def split_groups(labels):
 
     return list(groups.values())
 
-def subset_construction(start, tokens):
-
-#turns the automaton (no epsilon arrows) into a deterministic one.
-#every new state stands for a SET of old states.
-#returns the new start state and a table (list of rows) describing every new state
-
-    priority = {token.name: i for i, token in enumerate(tokens)} 
-
-    def order(states):            
-
-        return sorted(states, key = lambda s: int(s.name[1:]))
-
-    def new_state(old_set):                                        
-
-        state = State(f"D{len(dfa_states)}", [])
-        finals = [s for s in old_set if s.is_final]
-
-        if finals:
-            winner = min(finals, key = lambda s: priority[s.token_name])    # best priority wins
-            state.is_final = True
-            state.token_name = winner.token_name
-
-        dfa_states[old_set] = state
-        toVisit.append(old_set)
-        return state
-
-    dfa_states = {}              # set of old states -> its new state
-    toVisit = []
-    table = []
-
-    dfa_start = new_state(frozenset([start]))
-    dfa_start.is_start = True
-
-    while toVisit:
-
-        old_set = toVisit.pop(0)
-        current = dfa_states[old_set]
-
-        labels = []
-        for s in order(old_set):
-            for chars, nextState in s.transitions:
-                labels.append(chars)
-
-        row = {"state": current.name,
-               "old states": "{" + ", ".join(s.name for s in order(old_set)) + "}",
-               "arrows": [],
-               "final": current.token_name}
-
-        for group in split_groups(labels):
-
-            targets = set()
-            for s in old_set:
-                for chars, nextState in s.transitions:
-                    if group[0] in chars:                  
-                        targets.add(nextState)
-
-            target_set = frozenset(targets)
-
-            if target_set not in dfa_states:
-                new_state(target_set)
-
-            current.add_transition(group, dfa_states[target_set])
-            row["arrows"].append((group, dfa_states[target_set].name))
-
-        table.append(row)
-
-    return dfa_start, table
-
-
 
 def remove_epsilon(start):
 
@@ -248,6 +179,77 @@ def remove_epsilon(start):
 
     number_states(start)        # states that are no longer reachable disappear here
     return start
+
+
+
+def subset_construction(start, tokens):
+
+#turns the automaton (no epsilon arrows) into a deterministic one.
+#every new state stands for a SET of old states.
+#returns the new start state and a table (list of rows) describing every new state
+
+    priority = {token.name: i for i, token in enumerate(tokens)} 
+
+    def order(states):                                            
+        return sorted(states, key = lambda s: int(s.name[1:]))
+
+    def new_state(old_set):                                         
+
+        state = State(f"D{len(dfa_states)}", [])
+        finals = [s for s in old_set if s.is_final]
+
+        if finals:
+            winner = min(finals, key = lambda s: priority[s.token_name]) 
+
+            state.is_final = True
+
+            state.token_name = winner.token_name
+
+        dfa_states[old_set] = state
+        toVisit.append(old_set)
+        return state
+
+    dfa_states = {}             
+    toVisit = []
+    table = []
+
+    dfa_start = new_state(frozenset([start]))
+    dfa_start.is_start = True
+
+    while toVisit:
+
+        old_set = toVisit.pop(0)
+        current = dfa_states[old_set]
+
+        labels = []
+        for s in order(old_set):
+            for chars, nextState in s.transitions:
+                labels.append(chars)
+
+        row = {"state": current.name,
+               "old states": "{" + ", ".join(s.name for s in order(old_set)) + "}",
+               "arrows": [],
+               "final": current.token_name}
+
+        for group in split_groups(labels):
+
+            targets = set()
+            for s in old_set:
+                for chars, nextState in s.transitions:
+                    if group[0] in chars:                 
+                        targets.add(nextState)
+
+            target_set = frozenset(targets)
+
+            if target_set not in dfa_states:
+                new_state(target_set)
+
+            current.add_transition(group, dfa_states[target_set])
+            row["arrows"].append((group, dfa_states[target_set].name))
+
+        table.append(row)
+
+    return dfa_start, table
 
 def printAutomata(start):
 
@@ -289,4 +291,5 @@ def printAutomata(start):
 
 if __name__ == "__main__":
   
-        printAutomata(remove_epsilon(union([IF, ID, SKIP, ELSE, ID])))
+       nfa =  remove_epsilon(union([IF, ID, SKIP, ELSE, ID]))
+# NEED TO MAKE FINAL DFA FULLY PRINTABLE
