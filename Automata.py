@@ -13,6 +13,7 @@ class State:
         self.transitions = transitions
         self.is_final = is_final
         self.is_start = is_start
+        self.token_name = None
 
     def add_transition(self, char, next_state):
 
@@ -46,7 +47,7 @@ def state_maker(token):
                 stateIndex += 1
 
         currentState.is_final = True
-        currentState.tokenName = token.name
+        currentState.token_name = token.name
 
         return start
 
@@ -165,7 +166,7 @@ def remove_epsilon(start):
 
             if s.is_final and not final:      
                 final = True
-                token_name = s.tokenName
+                token_name = s.token_name
 
             for chars, nextState in s.transitions:
 
@@ -285,12 +286,15 @@ def printAutomata(start):
 
         if currentState.is_final == True:
                 
-                print (f"{currentState.name} Is Final! --> {currentState.tokenName}")
+                print (f"{currentState.name} Is Final! --> {currentState.token_name}")
 
 
 
 
 if __name__ == "__main__":
+
+       TOKENS = [IF, ID, SKIP, ELSE, ID]
   
        nfa =  remove_epsilon(union([IF, ID, SKIP, ELSE, ID]))
-# NEED TO MAKE FINAL DFA FULLY PRINTABLE
+       dfa, table = subset_diviser(nfa, TOKENS)
+       printAutomata(dfa)
