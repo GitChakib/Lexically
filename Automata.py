@@ -253,6 +253,103 @@ def subset_diviser(start, tokens):
 
     return dfa_start, table
 
+
+def minimize(start):
+
+#merges states that behave identically.
+#returns the new start state and a table (list of rows) describing every new state
+
+    states = all_states(start)
+
+    # the characters, split into groups that behave the same everywhere in the machine
+    labels = []
+    for s in states:
+        for chars, nextState in s.transitions:
+            if chars not in labels:
+                labels.append(chars)
+    alphabet = split_groups(labels)
+
+    def move(state, group):                     # where does this group of characters lead? (None = nowhere)
+        for chars, nextState in state.transitions:
+            if group[0] in chars:
+                return nextState
+        return None
+
+    # first partition: split by "is it final, and for which token"
+    block = {}
+    kinds = {}
+    for s in states:
+        kind = (s.is_final, s.token_name)
+        if kind not in kinds:
+            kinds[kind] = len(kinds)
+        block[s] = kinds[kind]
+
+    # keep splitting blocks until nothing changes
+    while True:
+
+        signatures = {}
+        new_block = {}
+
+        for s in states:
+
+            targets = []
+            for group in alphabet:
+                target = move(s, group)
+                targets.append(block[target] if target is not None else None)
+
+            signature = (block[s], tuple(targets))      # my block + the blocks I lead to
+
+            if signature not in signatures:
+                signatures[signature] = len(signatures)
+            new_block[s] = signatures[signature]
+
+        done = len(signatures) == len(set(block.values()))
+        block = new_block
+
+        if done:
+            break
+
+    # build one new state per block
+    new_states = {}
+    members = {}
+
+    for s in states:
+
+        b = block[s]
+
+        if b not in new_states:
+            new_states[b] = State(f"M{len(new_states)}", [])
+            new_states[b].is_final = s.is_final
+            new_states[b].token_name = s.token_name
+            members[b] = []
+
+        members[b].append(s)
+
+    new_states[block[start]].is_start = True
+
+    table = []
+
+    for b, newState in new_states.items():
+
+        merged = {}                                     # target block -> characters leading there
+
+        for chars, nextState in members[b][0].transitions:
+            t = block[nextState]
+            merged[t] = merged.get(t, "") + "".join(c for c in chars if c not in merged.get(t, ""))
+
+        row = {"state": newState.name,
+               "old states": "{" + ", ".join(s.name for s in members[b]) + "}",
+               "arrows": [],
+               "final": newState.token_name}
+
+        for t, chars in merged.items():
+            newState.add_transition(chars, new_states[t])
+            row["arrows"].append((chars, new_states[t].name))
+
+        table.append(row)
+
+    return new_states[block[start]], table
+
 def printAutomata(start):
 
 #function for taking the start of the automata and traverses with each iteration printing the transitions of the next state
@@ -297,4 +394,4 @@ if __name__ == "__main__":
   
        nfa =  remove_epsilon(union([IF, ID, SKIP, ELSE, ID]))
        dfa, table = subset_diviser(nfa, TOKENS)
-       printAutomata(dfa)
+       mini, mini_table = minimize(dfa)
