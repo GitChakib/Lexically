@@ -395,3 +395,4 @@ if __name__ == "__main__":
        nfa =  remove_epsilon(union([IF, ID, SKIP, ELSE, ID]))
        dfa, table = subset_diviser(nfa, TOKENS)
        mini, mini_table = minimize(dfa)
+       printAutomata(mini)

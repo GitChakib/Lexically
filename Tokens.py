@@ -3,7 +3,7 @@
 #NEEDED FOR MATCHING (instead of writing "L/N" just write letters + (same as or) numbers)
 letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 numbers = "0123456789"
-space = " \t"
+space = " \t\n\r"
 epsilon = None       #ε transitions are counted as None since the character ε adds a character when epsilon in reality is empty
 
 
