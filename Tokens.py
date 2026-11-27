@@ -13,25 +13,8 @@ class Token:
     def __init__(self, name, string, skip = False):
         self.name = name
         self.string = string
+        self.skip = skip
 
-    def match_token(self, text, pos):
-        start_pos = pos
-
-        for chars, repeats in self.string:
-            if not repeats:
-                if pos < len(text) and text[pos] in chars:
-                    pos += 1
-                else:
-                    return None
-            else:
-                while pos < len(text) and text[pos] in chars:
-                    pos += 1
-                    
-        if pos == start_pos:
-
-            return None
-        
-        return self.name
 
 #defining our tokens
 
@@ -43,11 +26,3 @@ IF = Token("IF", [("i", False), ("f", False)])
 ID = Token("ID", [(letters, False), (letters + numbers, True)])
 ELSE = Token("ELSE", [("e", False), ("l", False), ("s", False), ("e", False)])
 SKIP = Token("WS", [(space, False), (space, True)], skip=True)
-
-#functtion to read string and match it with the token
-       
-if __name__ == "__main__":
-
-    for text in ["if", "chakib", "and", "abc123", "print", "else", "walid", "13"]:
-
-        print(f"{text} {IF.match_token(text, 0) or ELSE.match_token(text, 0) or ID.match_token(text, 0)}")

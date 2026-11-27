@@ -254,6 +254,59 @@ def subset_diviser(start, tokens):
     return dfa_start, table
 
 
+def tokenize(start, text, tokens):
+
+#runs a block of text through the deterministic automaton and returns the list of tokens found.
+#at each position it keeps reading as long as an arrow exists, remembers the LAST final state it
+#passed (the longest match), then cuts the token there and starts again right after it
+
+    skip_names = {token.name for token in tokens if token.skip}
+    result = []
+    pos = 0
+
+    while pos < len(text):
+
+        state = start
+        i = pos
+        last_final = None                           # (token name, end position)
+
+        while i < len(text):
+
+            nextState = None
+            for chars, target in state.transitions:
+                if text[i] in chars:
+                    nextState = target
+                    break
+
+            if nextState is None:                   # no arrow for this character: stop
+                break
+
+            state = nextState
+            i += 1
+
+            if state.is_final:
+                last_final = (state.token_name, i)
+
+        line = text.count("\n", 0, pos) + 1
+        column = pos - (text.rfind("\n", 0, pos) + 1) + 1
+
+        if last_final is None:                      # nothing matched here: report the character, move on
+            result.append({"token": "ERROR", "lexeme": text[pos], "line": line, "column": column})
+            pos += 1
+            continue
+
+        name, end = last_final
+
+        if name not in skip_names:
+            result.append({"token": name, "lexeme": text[pos:end], "line": line, "column": column})
+
+        pos = end
+
+    return result
+
+
+
+
 def minimize(start):
 
 #merges states that behave identically.
@@ -350,6 +403,15 @@ def minimize(start):
 
     return new_states[block[start]], table
 
+def build_machine(tokens):
+
+
+    nfa = remove_epsilon(union(tokens))
+    dfa, table = subset_diviser(nfa, tokens)
+    mini, mini_table = minimize(dfa)
+
+    return mini
+
 def printAutomata(start):
 
 #function for taking the start of the automata and traverses with each iteration printing the transitions of the next state
@@ -390,9 +452,11 @@ def printAutomata(start):
 
 if __name__ == "__main__":
 
-       TOKENS = [IF, ID, SKIP, ELSE, ID]
-  
-       nfa =  remove_epsilon(union([IF, ID, SKIP, ELSE, ID]))
-       dfa, table = subset_diviser(nfa, TOKENS)
-       mini, mini_table = minimize(dfa)
-       printAutomata(mini)
+    TOKENS = [IF, SKIP, ELSE, ID]
+    
+    mini = build_machine(TOKENS)
+
+    code = "if x1 else\n  count2 iffy elsex @"
+
+    for t in tokenize(mini, code, TOKENS):
+        print(t)
