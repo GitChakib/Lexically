@@ -2,6 +2,8 @@
 
 from Tokens import IF, ID, ELSE, SKIP
 from Tokens import letters, numbers, epsilon, space
+with open("code.txt", "r", encoding="utf-8") as file:
+    code = file.read()
 
 
 class State:
@@ -455,8 +457,6 @@ if __name__ == "__main__":
     TOKENS = [IF, SKIP, ELSE, ID]
     
     mini = build_machine(TOKENS)
-
-    code = "if x1 else\n  count2 iffy elsex @"
 
     for t in tokenize(mini, code, TOKENS):
         print(t)
